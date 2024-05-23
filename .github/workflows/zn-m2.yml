@@ -1,13 +1,11 @@
 #
-# https://github.com/P3TERX/Actions-OpenWrt
-#
-# File: .github/workflows/openwrt-bulder.yml
-# Description: Build OpenWrt using GitHub Actions
-#
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
+# Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
 #
 # This is free software, licensed under the MIT License.
 # See /LICENSE for more information.
+#
+# https://github.com/P3TERX/Actions-OpenWrt
+# Description: Build OpenWrt using GitHub Actions
 #
 
 name: zn-m2 build
@@ -34,7 +32,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     
@@ -56,17 +54,14 @@ jobs:
         swap-storage: true
 
     - name: Checkout
-      uses: actions/checkout@main
+      uses: actions/checkout@v3.1.0
 
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         curl -s https://raw.githubusercontent.com/immortalwrt/build-scripts/master/init_build_environment.sh | sudo bash
-        sudo apt-get install -y rename pigz libfuse-dev upx subversion clang
-        sudo apt-get autoremove -y --purge
-        sudo apt-get clean
-        sudo rm -rf po2lmo
         sudo timedatectl set-timezone "$TZ"
         git config --global user.email ${{ github.actor }}@users.noreply.github.com
         git config --global user.name ${{ github.actor }}
@@ -81,6 +76,12 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
+    - name: Cache
+      uses: stupidloud/cachewrtbuild@main
+      with:
+        ccache: 'true'
+        prefix: ${{ github.workspace }}/openwrt
+
     - name: Load custom feeds
       run: |
         set -x
@@ -90,7 +91,9 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
     - name: Update feeds
-      run: cd openwrt && ./scripts/feeds update -a
+      run: |
+        cd openwrt
+        ./scripts/feeds update -a
 
     - name: Modify feeds
       run: |
@@ -100,8 +103,19 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
     - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
-
+      run: | 
+        cd openwrt
+        ./scripts/feeds install -a
+        rm -rf feeds/packages/lang/golang
+        rm -rf feeds/luci/themes/luci-theme-design
+        rm -rf feeds/packages/net/adguardhome
+        rm -rf feeds/adgurd/luci-app-adguardhome
+        mv -f feeds/kiddin9/adguardhome feeds/packages/net/adguardhome
+        mv -f feeds/kiddin9/luci-app-adguardhome feeds/adgurd/luci-app-adguardhome
+        rm -rf feeds/kiddin9
+        git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
+        git clone https://github.com/combat60/luci-theme-design-diy feeds/luci/themes/luci-theme-design
+        
     - name: Load custom configuration
       run: |
         set -x
@@ -135,7 +149,7 @@ jobs:
       run: df -hT
 
     - name: Upload bin directory
-      uses: actions/upload-artifact@main
+      uses: actions/upload-artifact@v3
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
@@ -144,55 +158,47 @@ jobs:
     - name: Organize files
       id: organize
       run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
+        cd openwrt/bin
+        tar -zcf Packages.tar.gz packages
+        mv -f Packages.tar.gz ./targets/*/*
+        cd ./targets/*/*
+        rm -rf packages feeds.buildinfo version.buildinfo config.buildinfo
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware directory
-      uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
+      uses: actions/upload-artifact@v3
       with:
         name: ipq6000${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
 
     - name: Generate release tag
       id: tag
-      if: env.UPLOAD_RELEASE == 'true'
       run: |
-        echo "release_tag=ZN-M2-$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+        echo "release_tag=ZN-M2-2024_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        echo "ZN-M2 firmware" >> release.txt
-        grep luci-app-passwall ${{ env.FIRMWARE }}/openwrt-ipq60xx-generic-device-zn-m2.manifest | awk -F" - " '{print "Passwall " "`"$2"`"}' >> release.txt
-        grep xray-core ${{ env.FIRMWARE }}/openwrt-ipq60xx-generic-device-zn-m2.manifest | awk -F" - " '{print $2}'| awk -F"-" '{print "Xray " "`"$1"`"}' >> release.txt
-        grep sing-box ${{ env.FIRMWARE }}/openwrt-ipq60xx-generic-device-zn-m2.manifest | awk -F" - " '{print $2}'| awk -F"-" '{print "Sing-Box " "`"$1"`"}' >> release.txt
-        grep hysteria ${{ env.FIRMWARE }}/openwrt-ipq60xx-generic-device-zn-m2.manifest | awk -F" - " '{print $2}'| awk -F"-" '{print "Hysteria " "`"$1"`"}' >> release.txt
-        grep chinadns-ng ${{ env.FIRMWARE }}/openwrt-ipq60xx-generic-device-zn-m2.manifest | awk -F" - " '{print $2}'| awk -F"-" '{print "ChinaDNS-NG " "`"$1"`"}' >> release.txt
-        echo "详细包信息请查看 manifest 文件" >> release.txt
-        grep luci-app-passwall ${{ env.FIRMWARE }}/openwrt-ipq60xx-generic-device-zn-m2.manifest | awk -F" - " '{print "release_name=Passwall " $2}' >> $GITHUB_OUTPUT
+        echo "ZN-M2-2024 firmware" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
-      uses: softprops/action-gh-release@master
-      if: steps.tag.outputs.status == 'success' && !cancelled()
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: ${{ steps.tag.outputs.release_name }}
         tag_name: ${{ steps.tag.outputs.release_tag }}
-        prerelease: true
+        prerelease: false
         body_path: release.txt
         files: |
-         ${{ env.FIRMWARE }}/*.ubi
          ${{ env.FIRMWARE }}/*.bin
-         ${{ env.FIRMWARE }}/*.manifest
+         ${{ env.FIRMWARE }}/*.ubi
+         ${{ env.FIRMWARE }}/*.tar.gz
 
     - name: Delete releases and workflows runs
       uses: ophub/delete-releases-workflows@main
       with:
         delete_releases: true
-        prerelease_option: true
-        releases_keep_latest: 3
+        prerelease_option: false
+        releases_keep_latest: 10
         delete_workflows: true
-        workflows_keep_day: 3
+        workflows_keep_day: 8
         gh_token: ${{ secrets.GITHUB_TOKEN }}

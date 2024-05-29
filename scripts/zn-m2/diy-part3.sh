@@ -11,7 +11,7 @@
 #
 
 # Modify default IP
-#sed -i 's/192.168.1.1/192.168.100.1/g' package/base-files/files/bin/config_generate
+#sed -i 's/192.168.1.1/192.168.123.1/g' package/base-files/files/bin/config_generate
 
 # 替换golang版本为1.22
 rm -rf feeds/packages/lang/golang
@@ -20,5 +20,3 @@ git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/l
 # ttyd免登陆
 sed -i -r 's#/bin/login#/bin/login -f root#g' feeds/packages/utils/ttyd/files/ttyd.config
 
-# design修改proxy链接
-sed -i -r "s#navbar_proxy = 'openclash'#navbar_proxy = 'passwall'#g" feeds/luci/themes/luci-theme-design/luasrc/view/themes/design/header.htm

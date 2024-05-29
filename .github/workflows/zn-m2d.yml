@@ -114,7 +114,8 @@ jobs:
         mv -f feeds/kiddin9/luci-app-adguardhome feeds/adgurd/luci-app-adguardhome
         rm -rf feeds/kiddin9
         git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
-        git clone https://github.com/combat60/luci-theme-design-diy feeds/luci/themes/luci-theme-design
+        git clone https://github.com/sbwml/luci-app-daed package/daed
+        git clone https://github.com/sbwml/v2ray-geodata package/daed/v2ray-geodata
         
     - name: Load custom configuration
       run: |

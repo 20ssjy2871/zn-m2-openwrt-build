@@ -170,9 +170,9 @@ jobs:
     - name: Generate release tag
       id: tag
       run: |
-        echo "release_tag=ZN-M2-2024_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+        echo "release_tag=ZN-M2_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        echo "ZN-M2-2024 firmware" >> release.txt
+        echo "ZN-M2 firmware" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release

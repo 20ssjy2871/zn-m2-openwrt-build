@@ -23,9 +23,5 @@ for f in /tmp/firmware-basic/*; do
   copy_with_suffix "$f" "basic"
 done
 
-for f in *; do
-  [ -f "$f" ] && copy_with_suffix "$f" "gecoosac-v2"
-done
-
 echo "Release firmware files:"
 ls -la /tmp/release-firmware/

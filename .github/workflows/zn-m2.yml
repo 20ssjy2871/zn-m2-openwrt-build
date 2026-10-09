@@ -12,11 +12,14 @@
 
 name: zn-m2 build
 
+#CI计划
 on:
-  schedule:
-    - cron: '23 19 * * *'   # Daily at 03:23 CST
-  workflow_dispatch:
-
+  #自动编译：当Auto-Clean运行完成后
+  workflow_run:
+    workflows: ["Auto-Clean"]
+    types:
+      - completed
+  #手动编译
 defaults:
   run:
     shell: bash -euo pipefail {0}

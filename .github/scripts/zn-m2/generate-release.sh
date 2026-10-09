@@ -24,8 +24,6 @@ grep chinadns-ng "$MANIFEST" | awk -F" - " '{print $2}' | awk -F"-" '{print "**C
 echo "" >> release.txt
 echo "### 变体说明" >> release.txt
 echo "- **basic**: 纯净版，不含集客AC控制器" >> release.txt
-echo "- **gecoosac-v2**: 含集客AC控制器 V2" >> release.txt
-echo "" >> release.txt
 echo "详细包信息请查看 manifest 文件" >> release.txt
 
 echo "release_name=ZN-M2 Passwall ${PASSWALL_VER}" >> "$GITHUB_OUTPUT"

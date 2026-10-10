@@ -134,16 +134,6 @@ jobs:
         mkdir -p /tmp/firmware-basic
         cp -a . /tmp/firmware-basic/
 
-    # ============================================================
-    # Build 2: GECOSAC-V2 (with gecoosac, incremental)
-    # ============================================================
-    - name: Build GECOSAC firmware (incremental)
-      run: |
-        cd openwrt
-        cp /tmp/zn-m2-full.config .config
-        make defconfig
-        echo "$(nproc) thread compile (gecoosac-v2, incremental)"
-        make -j$(nproc) || make -j1 V=s
 
     # ============================================================
     # Organize & Publish

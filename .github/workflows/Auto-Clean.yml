@@ -1,9 +1,13 @@
 name: Auto-Clean
 
+#CI计划
 on:
-  #自动清理：北京时间每天 23:10
-  schedule:
-    - cron: 10 14 * * *
+  #自动编译：当Auto-Clean运行完成后
+  workflow_run:
+    workflows: ["Cache-Clean"]
+    types:
+      - completed
+  
   #手动清理
   workflow_dispatch:
 

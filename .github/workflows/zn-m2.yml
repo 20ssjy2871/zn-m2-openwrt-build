@@ -2,7 +2,7 @@
 # https://github.com/P3TERX/Actions-OpenWrt
 #
 # File: .github/workflows/zn-m2.yml
-# Description: Build OpenWrt ZN-M2 firmware (basic + gecoosac-v2) using GitHub Actions
+# Description: Build OpenWrt ZN-M2 firmware (BASIC) using GitHub Actions
 #
 # Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
 #
@@ -12,14 +12,11 @@
 
 name: zn-m2 build
 
-# CI计划
 on:
-  # 自动编译：当 Auto-Clean 运行完成后
   workflow_run:
     workflows: ["Auto-Clean"]
     types:
       - completed
-  # 手动编译按钮
   workflow_dispatch:
 
 defaults:
@@ -42,7 +39,6 @@ env:
 
 jobs:
   build:
-    # 允许 手动触发(workflow_dispatch) 或 由 Auto-Clean 触发(workflow_run)
     if: |
       github.event_name == 'workflow_dispatch' || 
       github.event_name == 'workflow_run'
@@ -95,9 +91,6 @@ jobs:
         make download -j8
         find dl -size -1024c -exec rm -f {} \;
 
-    # ============================================================
-    # Build 1: BASIC (without gecoosac)
-    # ============================================================
     - name: Build BASIC firmware
       run: |
         cd openwrt
@@ -113,9 +106,6 @@ jobs:
         mkdir -p /tmp/firmware-basic
         cp -a . /tmp/firmware-basic/
 
-    # ============================================================
-    # Organize & Publish
-    # ============================================================
     - name: Organize firmware files
       run: bash .github/scripts/zn-m2/organize-firmware.sh
 

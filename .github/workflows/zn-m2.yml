@@ -12,14 +12,16 @@
 
 name: zn-m2 build
 
-#CI计划
+# CI计划
 on:
-  #自动编译：当Auto-Clean运行完成后
+  # 自动编译：当 Auto-Clean 运行完成后
   workflow_run:
     workflows: ["Auto-Clean"]
     types:
       - completed
-  #手动编译
+  # 手动编译按钮
+  workflow_dispatch:
+
 defaults:
   run:
     shell: bash -euo pipefail {0}
@@ -39,37 +41,14 @@ env:
   TZ: Asia/Shanghai
 
 jobs:
-  # Gate for schedule trigger: only build if upstream Passwall has new version
-  check:
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-22.04
-    outputs:
-      should_build: ${{ steps.check.outputs.should_build }}
-      latest_pkg_sha: ${{ steps.check.outputs.latest_pkg_sha }}
-    steps:
-    - uses: actions/checkout@v7
-
-    - uses: actions/cache/restore@v6
-      with:
-        path: /tmp/passwall-cache
-        key: passwall-packages-sha
-        restore-keys: passwall-packages-sha
-
-    - name: Check upstream updates
-      id: check
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: bash .github/scripts/zn-m2/check-upstream.sh
-
   build:
-    needs: check
+    # 允许 手动触发(workflow_dispatch) 或 由 Auto-Clean 触发(workflow_run)
     if: |
-      always() &&
-      (github.event_name == 'workflow_dispatch' || needs.check.outputs.should_build == 'true')
+      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'workflow_run'
     runs-on: ubuntu-22.04
 
     steps:
-
     - name: Checkout
       uses: actions/checkout@v7
 
@@ -133,7 +112,6 @@ jobs:
         rm -rf packages
         mkdir -p /tmp/firmware-basic
         cp -a . /tmp/firmware-basic/
-
 
     # ============================================================
     # Organize & Publish
